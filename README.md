@@ -2,7 +2,7 @@
 A menu creator for FiveM
 
 # ToDo : 
-- Sliders / Lists (When user scroll with his mouse some elements can do an function, might check where his mouse is)
+- Lists (When user scroll with his mouse some elements can do an function (like change the text of an text), might check where his mouse is)
 - The Menu creator (Create menu easily like [this](https://github.com/CritteRo/drawEditorV))
 - Modify this script to do anything like HUD or more, not just menus
 
