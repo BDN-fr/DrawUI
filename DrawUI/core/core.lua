@@ -256,7 +256,7 @@ DrawUI.DrawMenu = function(menu)
         DrawUI.Menus[menu].onClose()
     end)
     Citizen.CreateThread(function ()
-        while DrawUI.Menus[menu].open == true do
+        while DrawUI.Menus[menu].open do
             Citizen.Wait(50)
 
             -- Back / Close
@@ -433,11 +433,4 @@ end
                   ...::::::.......::::::::.....                                                     
                        ...................                                                          
                        ..................                                                           
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
 ]]
