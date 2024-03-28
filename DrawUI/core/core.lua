@@ -48,13 +48,11 @@ DrawUI = {
         DrawUI.Menus[name] = {parentMenu = parentMenu, index = {elements = {}, buttons = {}, lists = {}, keys = {},},elements = {}, buttons = {}, lists = {}, keys = {}, onClose = closeFunc}
     end,
 
-    --[[
     ForgetMenu = function(menu) -- Clear the menu from the memory of the Player
         if DrawUI.Menus[menu] and not DrawUI.Menus[menu].open then
-            --table.remove(DrawUI.Menus[menu]) -- NOT WORKING
+            DrawUI.Menus[menu] = nil
         end
     end,
-    ]]
 
     DeleteElement = function (menu, element)
         if DrawUI.Menus[menu].elements[element] then
@@ -106,6 +104,10 @@ DrawUI = {
 
     AddTxt = function(menu, name, text, size, x, y, r, g, b, a, parameters) -- parameters = {font = 0, shadows = {distance=1, r=1, g=1, b=1, a=255}, edges = {size=3, r=0, g=0, b=0, a=255}, wraps = {left=0, right=1}, justification = 'center'}
         if DrawUI.Menus[menu] then
+            if not parameters then parameters = {} end
+            if not parameters.wraps then parameters.wraps = {} end
+            if not parameters.shadows then parameters.shadows = {} end
+            if not parameters.edges then parameters.edges = {} end
             if parameters.wraps.left == 0 then parameters.wraps.left = 0.00001 end
             if parameters.wraps.right == 1 then parameters.wraps.right = 0.99999 end
             -- 0 and 1 just don't work, idk why
@@ -150,9 +152,9 @@ DrawUI = {
                 padIndex = padIndex,
                 control = control,
                 action = action,
-                inputText = inputText,
-                inputKey = inputKey,
-                inputDescription = inputDescription
+                inputText = inputText or false,
+                inputKey = inputKey or false,
+                inputDescription = inputDescription or false
             }
             table.insert(DrawUI.Menus[menu].index['keys'],name)
         end
@@ -191,7 +193,8 @@ DrawUI = {
             if not toggle then
                 toggle = not state
             end
-            state = toggle
+            DrawUI.GetElement(menu, element).hidden = toggle
+            --DrawUI.Menus[menu].elements[element].hidden = toggle
         end
     end,
 
@@ -224,6 +227,7 @@ DrawUI.DrawMenu = function(menu)
             EnableControlAction(0,240, true)
             for i,v in ipairs(DrawUI.Menus[menu].index['elements']) do
                 local e = DrawUI.Menus[menu].elements[v]
+                if e.hidden then goto skip end
                 if e.type == 'rect' then
                     DrawRect(e.x+(e.width/2), e.y+(e.height/2), e.width, e.height, e.colors.r, e.colors.g, e.colors.b, e.a)
                 elseif e.type == 'img' then
@@ -251,6 +255,7 @@ DrawUI.DrawMenu = function(menu)
                     AddTextComponentString(e.text)
                     DrawText(e.x, e.y)
                 end
+                ::skip::
             end
         end
         DrawUI.Menus[menu].onClose()
@@ -270,7 +275,10 @@ DrawUI.DrawMenu = function(menu)
             -- Keys
             for i,v in ipairs(DrawUI.Menus[menu].index['keys']) do
                 local e = DrawUI.Menus[menu].keys[v]
-                if IsControlPressed(v.padIndex, v.control) or IsDisabledControlPressed(v.padIndex, v.control) then
+                if IsControlPressed(e.padIndex, e.control) or IsDisabledControlPressed(e.padIndex, e.control) then
+                    while IsControlPressed(e.padIndex, e.control) or IsDisabledControlPressed(e.padIndex, e.control) do
+                        Citizen.Wait(1)
+                    end
                     e.action()
                 end
                 --if e.inputText then
