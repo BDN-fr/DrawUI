@@ -30,15 +30,25 @@ DrawUI = {
         end
     end,
 
-    GetElement = function (menu, element) -- ex. For modify an element : DrawUI.GetElement('menu', 'rect').x = 0.2
+    GetElement = function (menu, element)
         return DrawUI.Menus[menu].elements[element]
+    end,
+
+    --[[
+    example : if you wan't to set a text of a text element do:
+    DrawUI.SetVariable('MyCoolMenu','elements','title','Cool Title')
+    ]]
+    SetVariable = function (menu, type, name, variable, value)
+        if DrawUI.Menus[menu] then
+            DrawUI.Menus[menu][type][name][variable] = value
+        end
     end,
 
     GetCursorPosition = function()
         return GetControlNormal(0, 239), GetControlNormal(0, 240)
     end,
 
-    IsPressed = function()
+    IsClicked = function()
         return IsControlPressed(0,  24) or IsDisabledControlPressed(0,  24)
     end,
 
@@ -80,6 +90,7 @@ DrawUI = {
                 hidden = false
             }
             table.insert(DrawUI.Menus[menu].index['elements'],name)
+            return DrawUI.GetElement(menu,name)
         end
     end,
 
@@ -99,6 +110,7 @@ DrawUI = {
                 hidden = false
             }
             table.insert(DrawUI.Menus[menu].index['elements'],name)
+            return DrawUI.GetElement(menu,name)
         end
     end,
 
@@ -128,6 +140,7 @@ DrawUI = {
                 hidden = false
             }
             table.insert(DrawUI.Menus[menu].index['elements'],name)
+            return DrawUI.GetElement(menu,name)
         end
     end,
 
@@ -160,30 +173,10 @@ DrawUI = {
         end
     end,
 
-    CreateList = function (menu, name)
+    CreateList = function (menu, name, action)
         if DrawUI.Menus[menu] then
-            if DrawUI.Menus[menu].lists[name] then
-                DrawUI.Menus[menu].lists[name] = {}
-                return
-            end
-            DrawUI.Menus[menu].lists[name] = {elements = {}}
+            DrawUI.Menus[menu].lists[name] = {action = action, scrollAmount = 0}
             table.insert(DrawUI.Menus[menu].index['lists'],name)
-        end
-    end,
-
-    SetElementInList = function (menu, element, list, toggle)
-        local list = DrawUI.Menus[menu].lists[list]
-        if DrawUI.Menus[menu] and DrawUI.Menus[menu].elements[element] and list then
-            if not toggle then print('[DrawUI] ERROR : You have to set the toggle true or false') return end
-            if toggle then
-                table.insert(list, element)
-            else
-                for i, v in ipairs(list) do
-                    if v == element then
-                        table.remove(i)
-                    end
-                end
-            end
         end
     end,
 
@@ -193,8 +186,7 @@ DrawUI = {
             if not toggle then
                 toggle = not state
             end
-            DrawUI.GetElement(menu, element).hidden = toggle
-            --DrawUI.Menus[menu].elements[element].hidden = toggle
+            DrawUI.Menus[menu].elements[element].hidden = toggle
         end
     end,
 
@@ -223,8 +215,10 @@ DrawUI.DrawMenu = function(menu)
             DisableControlAction(0, 1, false)
             DisableControlAction(0, 2, false)
             DisableControlAction(0, 24, false)
-            EnableControlAction(0,239, true)
-            EnableControlAction(0,240, true)
+            DisableControlAction(0, 16, false)
+            DisableControlAction(0, 17, false)
+            EnableControlAction(0,239, false)
+            EnableControlAction(0,240, false)
             for i,v in ipairs(DrawUI.Menus[menu].index['elements']) do
                 local e = DrawUI.Menus[menu].elements[v]
                 if e.hidden then goto skip end
@@ -266,8 +260,12 @@ DrawUI.DrawMenu = function(menu)
 
             -- Back / Close
             if IsControlPressed(0, 177) then
+                while IsControlPressed(0, 177) do
+                    Citizen.Wait(1)
+                end
                 DrawUI.Menus[menu].open = false
-                if DrawUI.Menus[menu].parentMenu then
+                local parentMenu = DrawUI.Menus[menu].parentMenu
+                if parentMenu then
                     DrawUI.DrawMenu(parentMenu)
                 end
             end
@@ -286,8 +284,25 @@ DrawUI.DrawMenu = function(menu)
                 --end
             end
 
+            -- Lists (the scroll feeling is strange for me idk why and idk if it's only for me)
+            if IsControlPressed(0, 16) or IsDisabledControlPressed(0, 16) then -- Scroll Drown
+                for i,v in ipairs(DrawUI.Menus[menu].index['lists']) do
+                    local list = DrawUI.Menus[menu].lists[v]
+                    list.scrollAmount = list.scrollAmount + 1
+                    list.action(list.scrollAmount)
+                end
+            end
+            if IsControlPressed(0, 17) or IsDisabledControlPressed(0, 17) then -- Scroll Up
+                for i,v in ipairs(DrawUI.Menus[menu].index['lists']) do
+                    local list = DrawUI.Menus[menu].lists[v]
+                    list.scrollAmount = list.scrollAmount - 1
+                    if list.scrollAmount < 0 then list.scrollAmount = 0 end
+                    list.action(list.scrollAmount)
+                end
+            end
+
             -- Buttons
-            if #DrawUI.Menus[menu].index['buttons'] then
+            if #DrawUI.Menus[menu].index['buttons'] > 0 then
                 for i,v in ipairs(DrawUI.Menus[menu].index['buttons']) do
                     local e = DrawUI.Menus[menu].buttons[v]
                     local posx, posy = DrawUI.GetCursorPosition()
@@ -296,8 +311,8 @@ DrawUI.DrawMenu = function(menu)
                             e.hoverAction(e)
                         end
                         --SetMouseCursorSprite(5)
-                        if DrawUI.IsPressed() then
-                            while DrawUI.IsPressed() do
+                        if DrawUI.IsClicked() then
+                            while DrawUI.IsClicked() do
                                 Citizen.Wait(1)
                             end
                             if e.clickAction then
@@ -319,6 +334,7 @@ end
 
 -- Scaleform
 -- https://forum.cfx.re/t/scaleforms/99874
+-- If someone have time to help me for that Pulls Requests are open
 
 --[[
 function Scaleform.Request(scaleform)
@@ -380,65 +396,4 @@ function SetInstructionalButtons(setArray)
 
     Scaleform.CallFunction(ButtonScaleformId, false, "DRAW_INSTRUCTIONAL_BUTTONS")
 end
-]]
-
-
-
---[[
-888b     d888               888              888                   888888b.   8888888b.  888b    888           .d888
-8888b   d8888               888              888                   888  "88b  888  "Y88b 8888b   888          d88P"
-88888b.d88888               888              888                   888  .88P  888    888 88888b  888          888
-888Y88888P888  8888b.   .d88888  .d88b.      88888b.  888  888     8888888K.  888    888 888Y88b 888          888888 888d888
-888 Y888P 888     "88b d88" 888 d8P  Y8b     888 "88b 888  888     888  "Y88b 888    888 888 Y88b888          888    888P"
-888  Y8P  888 .d888888 888  888 88888888     888  888 888  888     888    888 888    888 888  Y88888          888    888
-888   "   888 888  888 Y88b 888 Y8b.         888 d88P Y88b 888     888   d88P 888  .d88P 888   Y8888          888    888
-888       888 "Y888888  "Y88888  "Y8888      88888P"   "Y88888     8888888P"  8888888P"  888    Y888 88888888 888    888
-                                                           888
-                                                      Y8b d88P
-                                                       "Y88P"
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                            ..............................................:....                     
-                          ..:::::::::::::::::::::::::::::::::::::::::::::::::::..                   
-                         .::-=================================================-::.                  
-                       .::=======================================================:..                
-                    ..::--=======================================================--:..              
-                    ..:-===========================================================-...             
-                    ..:-===========================================================-:..             
-                    .::-===========================================================-:..             
-                    ..:-===========================================================-:..             
-                    ..:-===========================================================-:..             
-                    ..:-===========================================================-:..             
-                    ..:-===========================================================-:..             
-                    ..:-===========================================================-:..             
-                    ..:-===================-:::::::::::::::::::-===================-:..             
-                    ..:-===================-::................:-===================-:..             
-                    ..:-===================-..................:-===================-:..             
-                    ..:-===================-:.:             ..:-===================-:..             
-                    .::-===================-:.:             ..:-===================-:..             
-                    .::-==-:::::::::::::-==-..:             ..:-===================-:..             
-                    ..::----::::::::::::---:..:             ..:-===================-:..             
-                    ..::::===============:::..:             ..:-===================-:..             
-                  :::=========================::.           ..:-===================-:..             
-               ..:--==========================--::..:.........:-===================-:..             
-               ..:-==--================-========-::::::::::::::-===================-:..             
-               ..:-=-..-==============:.:==========================================-:..             
-             ..:=====..-==============:.:==========================================-:..             
-             ..:=====---==============---==+=====:-================================-:..             
-             :.:================================:.:================================-:..             
-             :....-=====================-.......:==================================-:..             
-             .::--:.....................:-=========================================-:..             
-             ..:==-:::::::::::::::::::::-==========================================-:..             
-             ..:===================================================================::..             
-             ..:=================================================================::....             
-             ..:==============================================================-::::...              
-             .::==============================================================:..:..                
-               .::-===========================::..........................::::.:..                  
-               .:::::====================::::::..................................                   
-                ...::-------------------::.....................................                     
-                  ...::::::.......::::::::.....                                                     
-                       ...................                                                          
-                       ..................                                                           
 ]]
