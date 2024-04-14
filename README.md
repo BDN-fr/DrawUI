@@ -1,14 +1,10 @@
-# THIS IS IN BETA
-I will officially release the script when I have finished the lists
-
 # DrawUI
 A menu creator for FiveM
 
 # ToDo : 
-- [Work In Progres] Lists (When user scroll with his mouse some elements can do an function (like change the text of an text), might check where his mouse is)
 - The Menu creator (Create menu easily like [this](https://github.com/CritteRo/drawEditorV))
 - Modify this script to do anything like HUD or more, not just menus
-
+- Check where the mouse is when you scroll in lists for can make multiple lists per menus
 
 # Creative Commons Attribution (CC BY)
 
