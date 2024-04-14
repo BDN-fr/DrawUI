@@ -36,7 +36,7 @@ DrawUI = {
 
     --[[
     example : if you wan't to set a text of a text element do:
-    DrawUI.SetVariable('MyCoolMenu','elements','title','Cool Title')
+    DrawUI.SetVariable('MyCoolMenu','elements','title','text','Cool Title')
     ]]
     SetVariable = function (menu, type, name, variable, value)
         if DrawUI.Menus[menu] then
